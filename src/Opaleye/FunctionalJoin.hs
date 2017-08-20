@@ -37,7 +37,7 @@ joinF :: (columnsL -> columnsR -> columnsResult)
 joinF f cond l r =
   fmap (uncurry f) (O.keepWhen (uncurry cond) <<< ((,) <$> l <*> r))
 
-leftJoinF :: (D.Default IO.IfPP columnsResult columnsResult,
+leftJoinF :: (D.Default IO.EqPP columnsResult columnsResult,
               D.Default IU.Unpackspec columnsL columnsL,
               D.Default IU.Unpackspec columnsR columnsR)
           => (columnsL -> columnsR -> columnsResult)
@@ -68,7 +68,7 @@ leftJoinF f fL cond l r = fmap ret j
                                       (Column (Nullable T.PGBool))
         nullmakerBool = D.def
 
-rightJoinF :: (D.Default IO.IfPP columnsResult columnsResult,
+rightJoinF :: (D.Default IO.EqPP columnsResult columnsResult,
                D.Default IU.Unpackspec columnsL columnsL,
                D.Default IU.Unpackspec columnsR columnsR)
            => (columnsL -> columnsR -> columnsResult)
@@ -99,7 +99,7 @@ rightJoinF f fR cond l r = fmap ret j
                                       (Column (Nullable T.PGBool))
         nullmakerBool = D.def
 
-fullJoinF :: (D.Default IO.IfPP columnsResult columnsResult,
+fullJoinF :: (D.Default IO.EqPP columnsResult columnsResult,
               D.Default IU.Unpackspec columnsL columnsL,
               D.Default IU.Unpackspec columnsR columnsR)
           => (columnsL -> columnsR -> columnsResult)
