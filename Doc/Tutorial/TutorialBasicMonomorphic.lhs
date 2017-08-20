@@ -1,6 +1,7 @@
 > {-# LANGUAGE FlexibleContexts #-}
 > {-# LANGUAGE FlexibleInstances #-}
 > {-# LANGUAGE MultiParamTypeClasses #-}
+> {-# LANGUAGE UndecidableInstances #-}
 >
 > module TutorialBasicMonomorphic where
 >
@@ -15,8 +16,6 @@
 >                          showSqlForPostgres, Unpackspec,
 >                          PGInt4, PGInt8, PGText, PGDate, PGFloat8)
 >
-> import qualified Opaleye                 as O
->
 > import           Control.Applicative     (Applicative, (<$>), (<*>))
 >
 > import qualified Data.Profunctor         as P
@@ -24,7 +23,6 @@
 > import           Data.Profunctor.Product.Default (Default)
 > import qualified Data.Profunctor.Product.Default as D
 > import           Data.Time.Calendar (Day)
-> import qualified Opaleye.Internal.Join
 >
 > import qualified Database.PostgreSQL.Simple as PGS
 
@@ -137,17 +135,13 @@ them.
 >
 > data Birthday = Birthday { bdName :: String, bdDay :: Day }
 >
-> birthdayColumnDef ::
->   (Applicative (p BirthdayColumn),
->    P.Profunctor p,
->    Default p (Column PGText) (Column PGText),
->    Default p (Column PGDate) (Column PGDate)) =>
->   p BirthdayColumn BirthdayColumn
-> birthdayColumnDef = BirthdayColumn <$> P.lmap bdNameColumn D.def
->                                    <*> P.lmap bdDayColumn  D.def
->
-> instance Default Unpackspec BirthdayColumn BirthdayColumn where
->   def = birthdayColumnDef
+> instance (Applicative (p BirthdayColumn),
+>           P.Profunctor p,
+>           Default p (Column PGText) (Column PGText),
+>           Default p (Column PGDate) (Column PGDate))
+>          => Default p BirthdayColumn BirthdayColumn where
+>   def = BirthdayColumn <$> P.lmap bdNameColumn D.def
+>                        <*> P.lmap bdDayColumn  D.def
 
 Naturally this is all derivable using `Generic` or Template Haskell,
 but no one's bothered to implement that yet.  Would you like to?
@@ -199,7 +193,12 @@ this information with the following datatype.
 >                                  , radius   :: Column PGFloat8
 >                                  }
 >
-> instance Default Unpackspec WidgetColumn WidgetColumn where
+> instance (Applicative (p WidgetColumn),
+>           P.Profunctor p,
+>           Default p (Column PGText) (Column PGText),
+>           Default p (Column PGInt4) (Column PGInt4),
+>           Default p (Column PGFloat8) (Column PGFloat8))
+>          => Default p WidgetColumn WidgetColumn where
 >   def = WidgetColumn <$> P.lmap style    D.def
 >                      <*> P.lmap color    D.def
 >                      <*> P.lmap location D.def
@@ -289,11 +288,19 @@ purpose, which is just a notational convenience.
 >   BirthdayColumnNullable { bdNameColumnNullable :: Column (Nullable PGText)
 >                          , bdDayColumnNullable  :: Column (Nullable PGDate) }
 >
-> instance Default O.Unpackspec BirthdayColumnNullable BirthdayColumnNullable where
+> instance (Applicative (p BirthdayColumnNullable),
+>           P.Profunctor p,
+>           Default p (Column (Nullable PGText)) (Column (Nullable PGText)),
+>           Default p (Column (Nullable PGDate)) (Column (Nullable PGDate)))
+>          => Default p BirthdayColumnNullable BirthdayColumnNullable where
 >   def = BirthdayColumnNullable <$> P.lmap bdNameColumnNullable D.def
 >                                <*> P.lmap bdDayColumnNullable  D.def
 >
-> instance Default Opaleye.Internal.Join.NullMaker BirthdayColumn BirthdayColumnNullable where
+> instance (Applicative (p BirthdayColumn),
+>           P.Profunctor p,
+>           Default p (Column PGText) (Column (Nullable PGText)),
+>           Default p (Column PGDate) (Column (Nullable PGDate)))
+>          => Default p BirthdayColumn BirthdayColumnNullable where
 >   def = BirthdayColumnNullable <$> P.lmap bdNameColumn D.def
 >                                <*> P.lmap bdDayColumn  D.def
 
@@ -382,7 +389,11 @@ Haskell values.  Like `leftJoin` this particular formulation uses
 typeclasses so please put type signatures on everything in sight to
 minimize the number of confusing error messages!
 
-> instance Default O.QueryRunner BirthdayColumn Birthday where
+> instance (Applicative (p BirthdayColumn),
+>           P.Profunctor p,
+>           Default p (Column PGText) String,
+>           Default p (Column PGDate) Day)
+>          => Default p BirthdayColumn Birthday where
 >   def = Birthday <$> P.lmap bdNameColumn D.def
 >                  <*> P.lmap bdDayColumn  D.def
 >
