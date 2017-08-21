@@ -12,8 +12,10 @@
 >                          Query, (.==),
 >                          aggregate, groupBy,
 >                          count, avg, sum, leftJoin, runQuery,
->                          showSqlForPostgres, Unpackspec,
+>                          showSqlForPostgres,
 >                          PGInt4, PGInt8, PGText, PGDate, PGFloat8)
+>
+> import qualified Opaleye.Internal.PackMapColumn as PMC
 >
 > import qualified Opaleye                 as O
 >
@@ -146,7 +148,8 @@ them.
 > birthdayColumnDef = BirthdayColumn <$> P.lmap bdNameColumn D.def
 >                                    <*> P.lmap bdDayColumn  D.def
 >
-> instance Default Unpackspec BirthdayColumn BirthdayColumn where
+> instance Functor f
+>   => Default (PMC.PackMapColumn f) BirthdayColumn BirthdayColumn where
 >   def = birthdayColumnDef
 
 Naturally this is all derivable using `Generic` or Template Haskell,
@@ -199,7 +202,8 @@ this information with the following datatype.
 >                                  , radius   :: Column PGFloat8
 >                                  }
 >
-> instance Default Unpackspec WidgetColumn WidgetColumn where
+> instance Functor f
+>   => Default (PMC.PackMapColumn f) WidgetColumn WidgetColumn where
 >   def = WidgetColumn <$> P.lmap style    D.def
 >                      <*> P.lmap color    D.def
 >                      <*> P.lmap location D.def
@@ -289,7 +293,8 @@ purpose, which is just a notational convenience.
 >   BirthdayColumnNullable { bdNameColumnNullable :: Column (Nullable PGText)
 >                          , bdDayColumnNullable  :: Column (Nullable PGDate) }
 >
-> instance Default O.Unpackspec BirthdayColumnNullable BirthdayColumnNullable where
+> instance Functor f
+>   => Default (PMC.PackMapColumn f) BirthdayColumnNullable BirthdayColumnNullable where
 >   def = BirthdayColumnNullable <$> P.lmap bdNameColumnNullable D.def
 >                                <*> P.lmap bdDayColumnNullable  D.def
 >
@@ -404,5 +409,5 @@ Utilities
 
 This is a little utility function to help with printing generated SQL.
 
-> printSql :: Default Unpackspec a a => Query a -> IO ()
+> printSql :: Default O.Unpackspec a a => Query a -> IO ()
 > printSql = putStrLn . maybe "Empty query" id . showSqlForPostgres
