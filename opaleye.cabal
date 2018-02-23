@@ -71,6 +71,7 @@ library
                    Opaleye.Internal.Join,
                    Opaleye.Internal.Label,
                    Opaleye.Internal.Manipulation,
+                   Opaleye.Internal.Map,
                    Opaleye.Internal.Order,
                    Opaleye.Internal.Operators,
                    Opaleye.Internal.Optimize,
