@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TypeFamilies #-}
 
 module Opaleye.RunQuery (module Opaleye.RunQuery,
                          -- * Datatypes
@@ -17,6 +18,7 @@ import qualified Database.PostgreSQL.Simple.FromRow as FR
 import qualified Data.String as String
 
 import           Opaleye.Column (Column)
+import qualified Opaleye.Internal.Map as Map
 import qualified Opaleye.Sql as S
 import           Opaleye.QueryArr (Query)
 import           Opaleye.Internal.RunQuery (QueryRunner(QueryRunner))
@@ -53,6 +55,14 @@ runQuery :: D.Default QueryRunner columns haskells
          -> Query columns
          -> IO [haskells]
 runQuery = runQueryExplicit D.def
+
+runQueryInferrable :: ( D.Default QueryRunner columns haskells
+--                      , Map.Map IRQ.HaskellToSql haskells ~ columns
+                      , Map.Map IRQ.SqlToHaskell columns ~ haskells)
+                   => PGS.Connection
+                   -> Query columns
+                   -> IO [haskells]
+runQueryInferrable = Opaleye.RunQuery.runQuery
 
 -- | @runQueryFold@ streams the results of a query incrementally and consumes
 -- the results with a left fold.
