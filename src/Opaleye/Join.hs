@@ -45,12 +45,15 @@ leftJoin  :: (D.Default U.Unpackspec columnsL columnsL,
           -> Query (columnsL, nullableColumnsR) -- ^ Left join
 leftJoin = leftJoinExplicit D.def D.def D.def
 
+-- | 'leftJoinA' is a convenient way of using left joins within arrow
+-- notation
 leftJoinA :: (D.Default U.Unpackspec columnsR columnsR,
               D.Default J.NullMaker columnsR nullableColumnsR)
           => Query columnsR
           -- ^ Right query
           -> QueryArr (columnsR -> Column T.PGBool) nullableColumnsR
-          -- ^ Condition on which to join and left join result
+          -- ^ Condition on which to join goes in, left join
+          -- result comes out
 leftJoinA = leftJoinAExplict D.def D.def
 
 rightJoin  :: (D.Default U.Unpackspec columnsL columnsL,
@@ -73,16 +76,6 @@ fullJoin  :: (D.Default U.Unpackspec columnsL columnsL,
           -> Query (nullableColumnsL, nullableColumnsR) -- ^ Full outer join
 fullJoin = fullJoinExplicit D.def D.def D.def D.def
 
--- * Arrow inline left join
-
-leftJoinAExplict :: U.Unpackspec columnsR columnsR
-                 -> J.NullMaker columnsR nullableColumnsR
-                 -> Query columnsR
-                 -- ^ Right query
-                 -> QueryArr (columnsR -> Column T.PGBool) nullableColumnsR
-                 -- ^ Condition on which to join and left join result
-leftJoinAExplict = J.leftJoinAExplicit
-
 -- * Explicit versions
 
 leftJoinExplicit :: U.Unpackspec columnsL columnsL
@@ -93,6 +86,12 @@ leftJoinExplicit :: U.Unpackspec columnsL columnsL
                  -> Query (columnsL, nullableColumnsR)
 leftJoinExplicit uA uB nullmaker =
   J.joinExplicit uA uB id (J.toNullable nullmaker) PQ.LeftJoin
+
+leftJoinAExplict :: U.Unpackspec columnsR columnsR
+                 -> J.NullMaker columnsR nullableColumnsR
+                 -> Query columnsR
+                 -> QueryArr (columnsR -> Column T.PGBool) nullableColumnsR
+leftJoinAExplict = J.leftJoinAExplicit
 
 rightJoinExplicit :: U.Unpackspec columnsL columnsL
                   -> U.Unpackspec columnsR columnsR
