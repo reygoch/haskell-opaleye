@@ -152,15 +152,8 @@ pgRange pgEl start end = C.Column (HPQ.CastExpr (showRangeType ([] :: [b])) $ HP
         oneEl R.NegInfinity   = HPQ.NegInfinity
         oneEl R.PosInfinity   = HPQ.PosInfinity
 
-{-# DEPRECATED showPGType
-    "Use 'showSqlType' instead. 'showPGType' will be removed \
-    \in version 0.7." #-}
 class IsSqlType pgType where
-  showPGType :: proxy pgType -> String
-  showPGType  = showSqlType
-
   showSqlType :: proxy pgType -> String
-  showSqlType = showPGType
 
 instance IsSqlType PGBool where
   showSqlType _ = "boolean"
@@ -245,17 +238,3 @@ data PGBytea
 data PGJson
 data PGJsonb
 data PGRange a
-
--- * Deprecated functions
-
-literalColumn :: HPQ.Literal -> Column a
-literalColumn = IPT.literalColumn
-{-# DEPRECATED literalColumn
-    "'literalColumn' has been moved to Opaleye.Internal.PGTypes and will be removed in version 0.7."
-  #-}
-
-unsafePgFormatTime :: Time.FormatTime t => HPQ.Name -> String -> t -> Column c
-unsafePgFormatTime = IPT.unsafePgFormatTime
-{-# DEPRECATED unsafePgFormatTime
-    "'unsafePgFormatTime' has been moved to Opaleye.Internal.PGTypes and will be removed in version 0.7."
-  #-}

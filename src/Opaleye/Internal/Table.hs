@@ -47,16 +47,9 @@ import qualified Control.Arrow as Arr
 --                                      , quantity = tableColumn \"quantity\"
 --                                      , radius   = tableColumn \"radius\" })
 -- @
---
--- The constructors of Table are internal only and will be
--- deprecated in version 0.7.
 data Table writerColumns viewColumns
   = Table String (TableColumns writerColumns viewColumns)
-    -- ^ For unqualified table names. Do not use the constructor.  It
-    -- is internal and will be deprecated in version 0.7.
   | TableWithSchema String String (TableColumns writerColumns viewColumns)
-    -- ^ Schema name, table name, table properties.  Do not use the
-    -- constructor.  It is internal and will be deprecated in version 0.7.
 
 tableIdentifier :: Table writeColumns viewColumns -> PQ.TableIdentifier
 tableIdentifier (Table t _) = PQ.TableIdentifier Nothing t
@@ -66,19 +59,14 @@ tableColumns :: Table writeColumns viewColumns -> TableColumns writeColumns view
 tableColumns (Table _ p) = p
 tableColumns (TableWithSchema _ _ p) = p
 
--- | Use 'tableColumns' instead.  Will be deprecated soon.
+{-# DEPRECATED tableProperties "Use 'tableColumns' instead" #-}
 tableProperties :: Table writeColumns viewColumns -> TableColumns writeColumns viewColumns
 tableProperties = tableColumns
 
--- | Use 'TableColumns' instead. 'TableProperties' will be deprecated
--- in version 0.7.
-data TableProperties writeColumns viewColumns = TableProperties
+-- | This used to be called @TableProperties@.
+data TableColumns writeColumns viewColumns = TableColumns
    { tablePropertiesWriter :: Writer writeColumns viewColumns
    , tablePropertiesView   :: View viewColumns }
-
--- | The new name for 'TableColumns' which will replace
--- 'TableColumn' in version 0.7.
-type TableColumns = TableProperties
 
 tableColumnsWriter :: TableColumns writeColumns viewColumns
                    -> Writer writeColumns viewColumns
@@ -88,12 +76,7 @@ tableColumnsView :: TableColumns writeColumns viewColumns
                  -> View viewColumns
 tableColumnsView = tablePropertiesView
 
--- | Internal only.  Do not use.  'View' will be deprecated in version
--- 0.7.
 data View columns = View columns
-
--- | Internal only.  Do not use.  'Writer' will be deprecated in
--- version 0.7.
 
 -- There's no reason the second parameter should exist except that we
 -- use ProductProfunctors more than ProductContravariants so it makes
@@ -111,14 +94,14 @@ newtype Writer columns dummy =
 -- | 'required' is for columns which are not 'optional'.  You must
 -- provide them on writes.
 required :: String -> TableColumns (Column a) (Column a)
-required columnName = TableProperties
+required columnName = TableColumns
   (requiredW columnName)
   (View (Column (HPQ.BaseTableAttrExpr columnName)))
 
 -- | 'optional' is for columns that you can omit on writes, such as
 --  columns which have defaults or which are SERIAL.
 optional :: String -> TableColumns (Maybe (Column a)) (Column a)
-optional columnName = TableProperties
+optional columnName = TableColumns
   (optionalW columnName)
   (View (Column (HPQ.BaseTableAttrExpr columnName)))
 
@@ -209,18 +192,18 @@ instance ProductProfunctor Writer where
   empty = PP.defaultEmpty
   (***!) = PP.defaultProfunctorProduct
 
-instance Functor (TableProperties a) where
-  fmap f (TableProperties w (View v)) = TableProperties (fmap f w) (View (f v))
+instance Functor (TableColumns a) where
+  fmap f (TableColumns w (View v)) = TableColumns (fmap f w) (View (f v))
 
-instance Applicative (TableProperties a) where
-  pure x = TableProperties (pure x) (View x)
-  TableProperties fw (View fv) <*> TableProperties xw (View xv) =
-    TableProperties (fw <*> xw) (View (fv xv))
+instance Applicative (TableColumns a) where
+  pure x = TableColumns (pure x) (View x)
+  TableColumns fw (View fv) <*> TableColumns xw (View xv) =
+    TableColumns (fw <*> xw) (View (fv xv))
 
-instance Profunctor TableProperties where
-  dimap f g (TableProperties w (View v)) = TableProperties (dimap f g w)
+instance Profunctor TableColumns where
+  dimap f g (TableColumns w (View v)) = TableColumns (dimap f g w)
                                                             (View (g v))
-instance ProductProfunctor TableProperties where
+instance ProductProfunctor TableColumns where
   empty = PP.defaultEmpty
   (***!) = PP.defaultProfunctorProduct
 

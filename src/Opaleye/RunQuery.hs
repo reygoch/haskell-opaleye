@@ -13,15 +13,12 @@ module Opaleye.RunQuery (module Opaleye.RunQuery,
 import           Control.Applicative (pure, (<$>))
 import qualified Database.PostgreSQL.Simple as PGS
 import qualified Database.PostgreSQL.Simple.Cursor  as PGSC
-import qualified Database.PostgreSQL.Simple.FromRow as FR
-import qualified Data.String as String
 
 import           Opaleye.Column (Column)
-import qualified Opaleye.Sql as S
 import           Opaleye.QueryArr (Query)
-import           Opaleye.Internal.RunQuery (QueryRunner(QueryRunner))
+import           Opaleye.Internal.RunQuery (QueryRunner,
+                                            prepareQuery)
 import qualified Opaleye.Internal.RunQuery as IRQ
-import qualified Opaleye.Internal.QueryArr as Q
 
 import qualified Data.Profunctor as P
 import qualified Data.Profunctor.Product.Default as D
@@ -154,14 +151,3 @@ foldForward
 foldForward IRQ.EmptyCursor              _chunkSize _f z = pure $ Left z
 foldForward (IRQ.Cursor rowParser cursor) chunkSize  f z =
     PGSC.foldForwardWithParser cursor rowParser chunkSize f z
-
--- * Deprecated functions
-
-{-# DEPRECATED prepareQuery "Will be removed in version 0.7" #-}
-prepareQuery :: QueryRunner columns haskells -> Query columns -> (Maybe PGS.Query, FR.RowParser haskells)
-prepareQuery qr@(QueryRunner u _ _) q = (sql, parser)
-  where sql :: Maybe PGS.Query
-        sql = fmap String.fromString (S.showSqlForPostgresExplicit u q)
-        -- FIXME: We're doing work twice here
-        (b, _, _) = Q.runSimpleQueryArrStart q ()
-        parser = IRQ.prepareRowParser qr b

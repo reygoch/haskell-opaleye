@@ -360,16 +360,12 @@ timestamptzAtTimeZone = C.binOp HPQ.OpAtTimeZone
 
 -- * Deprecated
 
-{-# DEPRECATED doubleOfInt
-    "Use 'C.unsafeCast' instead. \
-    \Will be removed in version 0.7." #-}
-doubleOfInt :: Column T.PGInt4 -> Column T.PGFloat8
-doubleOfInt (Column e) = Column (HPQ.CastExpr "float8" e)
-
--- | Identical to 'restrictExists'.  Will be deprecated in version 0.7.
+{-# DEPRECATED exists "Use 'restrictExists' instead. \
+\Will be removed in version 0.8" #-}
 exists :: QueryArr a b -> QueryArr a ()
 exists = restrictExists
 
--- | Identical to 'restrictNotExists'.  Will be deprecated in version 0.7.
+{-# DEPRECATED notExists "Use 'restrictNotExists' instead. \
+\Will be removed in version 0.8" #-}
 notExists :: QueryArr a b -> QueryArr a ()
 notExists = restrictNotExists

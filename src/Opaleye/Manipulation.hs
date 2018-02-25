@@ -226,30 +226,6 @@ runUpdateReturningExplicit qr conn t update cond r =
 
 -- * Deprecated versions
 
--- | Returns the number of rows inserted
-
-{-# DEPRECATED runInsert
-    "'runInsert' will be removed in version 0.7. \
-    \Use 'runInsertMany' instead." #-}
-runInsert :: PGS.Connection -> T.Table columns columns' -> columns -> IO Int64
-runInsert conn = PGS.execute_ conn . fromString .: arrangeInsertSql
-
--- | @runInsertReturning@'s use of the 'D.Default' typeclass means that the
--- compiler will have trouble inferring types.  It is strongly
--- recommended that you provide full type signatures when using
--- @runInsertReturning@.
-
-{-# DEPRECATED runInsertReturning
-    "'runInsertReturning' will be removed in version 0.7. \
-    \Use 'runInsertManyReturning' instead." #-}
-runInsertReturning :: (D.Default RQ.QueryRunner columnsReturned haskells)
-                   => PGS.Connection
-                   -> T.Table columnsW columnsR
-                   -> columnsW
-                   -> (columnsR -> columnsReturned)
-                   -> IO [haskells]
-runInsertReturning = runInsertReturningExplicit D.def
-
 {-# DEPRECATED arrangeInsert
     "You probably want 'runInsertMany' instead. \
     \Will be removed in version 0.7." #-}
@@ -289,7 +265,7 @@ arrangeUpdate table update cond =
   SG.sqlUpdate SD.defaultSqlGenerator
                (PQ.tiToSqlTable (TI.tableIdentifier table))
                [condExpr] (update' tableCols)
-  where TI.TableProperties writer (TI.View tableCols) = TI.tableColumns table
+  where TI.TableColumns writer (TI.View tableCols) = TI.tableColumns table
         update' = map (\(x, y) -> (y, x)) . TI.runWriter writer . update
         Column condExpr = cond tableCols
 

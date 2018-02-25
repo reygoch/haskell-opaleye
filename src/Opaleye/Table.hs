@@ -72,16 +72,12 @@ module Opaleye.Table (-- * Creating tables
                       queryTable,
                       -- * Other
                       TableColumns,
-                      -- * Deprecated
-                      View,
-                      Writer,
-                      T.Table(T.Table, T.TableWithSchema),
                       -- * Module reexport
                       module Opaleye.Table) where
 
 import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Internal.Table as T
-import           Opaleye.Internal.Table (View, Table, Writer,
+import           Opaleye.Internal.Table (Table,
                                          TableColumns)
 
 import qualified Opaleye.Internal.Tag as Tag

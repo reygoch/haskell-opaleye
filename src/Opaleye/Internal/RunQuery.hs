@@ -1,22 +1,26 @@
 {-# LANGUAGE FlexibleContexts, FlexibleInstances, MultiParamTypeClasses #-}
-
 module Opaleye.Internal.RunQuery where
 
 import           Control.Applicative (Applicative, pure, (*>), (<*>), liftA2)
 
+import qualified Database.PostgreSQL.Simple as PGS
 import qualified Database.PostgreSQL.Simple.Cursor  as PGSC (Cursor)
 import           Database.PostgreSQL.Simple.Internal (RowParser)
 import           Database.PostgreSQL.Simple.FromField
   (FieldParser, FromField, fromField, pgArrayFieldParser)
+import qualified Database.PostgreSQL.Simple.FromRow as FR
 import           Database.PostgreSQL.Simple.FromRow (fromRow, fieldWith)
 import           Database.PostgreSQL.Simple.Types (fromPGArray, Only(..))
 
 import           Opaleye.Column (Column)
 import           Opaleye.Internal.Column (Nullable)
 import qualified Opaleye.Internal.PackMap as PackMap
+import qualified Opaleye.Internal.QueryArr as Q
 import qualified Opaleye.Column as C
 import qualified Opaleye.Internal.Unpackspec as U
 import qualified Opaleye.PGTypes as T
+import           Opaleye.QueryArr            (Query)
+import qualified Opaleye.Sql                 as S
 import qualified Opaleye.Internal.PGTypes as IPT (strictDecodeUtf8)
 
 import qualified Data.Profunctor as P
@@ -97,6 +101,16 @@ data QueryRunner columns haskells =
               -- other values one or more, for example, 'Maybe (Column
               -- PGInt4)' has no columns when it is Nothing and one
               -- column when it is Just.
+
+prepareQuery :: QueryRunner columns haskells
+             -> Query columns
+             -> (Maybe PGS.Query, FR.RowParser haskells)
+prepareQuery qr@(QueryRunner u _ _) q = (sql, parser)
+  where sql :: Maybe PGS.Query
+        sql = fmap String.fromString (S.showSqlExplicit u q)
+        -- FIXME: We're doing work twice here
+        (b, _, _) = Q.runSimpleQueryArrStart q ()
+        parser = prepareRowParser qr b
 
 fieldQueryRunnerColumn :: FromField haskell => QueryRunnerColumn pgType haskell
 fieldQueryRunnerColumn = fieldParserQueryRunnerColumn fromField
